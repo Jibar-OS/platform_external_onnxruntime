@@ -14,6 +14,3 @@ Used by OIR for every non-llama.cpp backend: `vision.detect` (RT-DETR / YOLO-fam
 - Upstream: [`microsoft/onnxruntime`](https://github.com/microsoft/onnxruntime)
 - JibarOS consumer: [`oird`](https://github.com/jibar-os/oird)
 
-## Migration status
-
-🚧 Transfer/creation in progress.
