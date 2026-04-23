@@ -1,0 +1,59 @@
+// Copyright (C) 2026 The OpenIntelligenceRuntime Project
+// Licensed under the Apache License, Version 2.0
+//
+// ONNX Runtime prebuilt for AOSP — v0.4 / OIR audio.synthesize + vision.detect.
+//
+// We wrap Microsoft's official Android prebuilt .so rather than building ORT
+// from source. ORT's source tree is ~500 MB + requires bazel/CMake
+// gymnastics, and upstream publishes stable per-ABI .so files already
+// optimized for mobile. The speed win of a custom build is marginal here —
+// ORT is used for small detection/synthesis models (tens of MB each), not
+// giant text models where we'd care about every cycle.
+//
+// Release pinned: ORT v1.20.0.
+// Source: https://github.com/microsoft/onnxruntime/releases/download/v1.20.0/
+//
+// The .so and headers are NOT committed to this repo (too big + upstream
+// licensing). Fetch them with ./fetch-prebuilts.sh which unpacks the
+// official .aar into prebuilts/<abi>/libonnxruntime.so and copies headers
+// into include/. CI will refuse to build if the prebuilts are missing and
+// print the fetch command.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+cc_prebuilt_library_shared {
+    name: "libonnxruntime",
+    // Install to /system_ext/lib64 (A16 generic_system.mk blocks non-approved
+    // .so files from /system/lib64; same reason oird lives in /system_ext/bin).
+    system_ext_specific: true,
+    vendor_available: true,
+    product_available: true,
+    strip: {
+        none: true,  // ORT's upstream .so is already stripped
+    },
+
+    // ORT's Android prebuilt has DT_NEEDED on liblog; declare it so Soong's
+    // check_elf_file verifier passes. No other AOSP deps needed.
+    shared_libs: [
+        "liblog",
+    ],
+
+    target: {
+        android_arm64: {
+            srcs: ["prebuilts/arm64-v8a/libonnxruntime.so"],
+        },
+        android_x86_64: {
+            srcs: ["prebuilts/x86_64/libonnxruntime.so"],
+        },
+        // No arm / x86 32-bit: AOSP 16 reference devices are 64-bit only.
+    },
+
+    export_include_dirs: [
+        "include",
+    ],
+
+    // ORT pulls in stdc++ RTTI + exceptions; AOSP cc_binary consumers
+    // already carry these so we don't redeclare.
+}
